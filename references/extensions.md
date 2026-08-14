@@ -1,3 +1,11 @@
+---
+source: https://pi.dev/docs/latest/extensions
+source_extra: https://pi.dev/docs/latest/tui
+verified_at: 2026-08-14
+upstream: earendil-works/pi
+upstream_commit: 9d2ec7f
+---
+
 # Pi Agent 扩展开发指南（面向二次开发者）
 
 > 来源：官方文档 [Extensions](https://pi.dev/docs/latest/extensions) 与 [TUI](https://pi.dev/docs/latest/tui)（抓取于 2026-08-14）。本文件为蒸馏手册，细节以官方文档为准。

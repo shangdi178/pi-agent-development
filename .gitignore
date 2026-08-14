@@ -1,0 +1,6 @@
+# 依赖安装产物
+node_modules/
+
+# 测试/运行产物
+*.log
+sse.log

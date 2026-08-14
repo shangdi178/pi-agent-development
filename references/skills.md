@@ -1,3 +1,11 @@
+---
+source: https://pi.dev/docs/latest/skills
+source_extra: https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/skills.md
+verified_at: 2026-08-14
+upstream: earendil-works/pi
+upstream_commit: 9d2ec7f
+---
+
 # Pi Agent Skills 开发参考（中文）
 
 > 官方文档：https://pi.dev/docs/latest/skills

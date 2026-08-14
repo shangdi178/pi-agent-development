@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pi RPC Bridge 最小示范</title>
+<style>
+  /* 极简样式，无框架 */
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: #f6f7f9; color: #1c1e21; }
+  header { padding: 12px 16px; background: #20242a; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  #status { font-size: 13px; color: #ffd166; }
+  #status.ok { color: #6bcf7f; }
+  #form { display: flex; gap: 8px; padding: 12px 16px; background: #fff; border-bottom: 1px solid #e2e5ea; }
+  #input { flex: 1; padding: 8px 10px; font-size: 14px; border: 1px solid #ccd1d9; border-radius: 6px; }
+  button { padding: 8px 14px; font-size: 14px; border: none; border-radius: 6px; cursor: pointer; background: #2563eb; color: #fff; }
+  button:disabled { background: #a5b4d6; cursor: default; }
+  #output { padding: 16px; max-width: 900px; margin: 0 auto; }
+  .line { padding: 4px 0; white-space: pre-wrap; word-break: break-word; }
+  .user { color: #2563eb; font-weight: 600; }
+  .text { font-size: 15px; line-height: 1.6; }
+  .thinking { color: #8a919c; font-size: 13px; }
+  .tool { color: #7c3aed; font-size: 13px; font-family: ui-monospace, SFMono-Regular, monospace; }
+  .ok { color: #2f8f46; font-size: 13px; }
+  .err { color: #c0392b; font-size: 13px; }
+  .meta { color: #8a919c; font-size: 13px; text-align: center; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Pi RPC Bridge 最小示范</h1>
+    <span id="status">连接中…</span>
+  </header>
+  <form id="form" autocomplete="off">
+    <input id="input" placeholder="输入消息，回车发送">
+    <button type="submit">发送</button>
+    <button type="button" id="stop" disabled>停止</button>
+  </form>
+  <div id="output"></div>
+
+  <script>
+    "use strict";
+    // 本页是"状态投影 + 用户交互"：所有真实状态（会话、回合、消息）都存在于 Pi，
+    // 浏览器只负责把 Pi 的事件渲染成界面。刷新页面不丢任何会话状态（会话在 pi 进程里）。
+    const output = document.getElementById("output");
+    const statusEl = document.getElementById("status");
+    const input = document.getElementById("input");
+    const stopBtn = document.getElementById("stop");
+    const form = document.getElementById("form");
+
+    // ---- 渲染 ----
+    function addLine(text, cls) {
+      const div = document.createElement("div");
+      div.className = "line " + cls;
+      div.textContent = text;
+      output.appendChild(div);
+      output.scrollTop = output.scrollHeight;
+      return div;
+    }
+
+    function setStatus(text, cls) {
+      statusEl.textContent = text;
+      statusEl.className = cls || "";
+    }
+
+    // 当前回合的流式拼装状态；message_end 时以权威消息覆盖
+    const turn = { thinking: "", text: "", thinkingEl: null, textEl: null };
+
+    function handle(event) {
+      switch (event.type) {
+        case "response": {
+          // 注意：success 只表示命令"已被接受"，不代表回合完成（完成看 agent_end）
+          if (event.success) {
+            addLine("[命令已接受] " + event.command + "（不代表完成）", "ok");
+          } else {
+            addLine("[命令失败] " + event.command + ": " + (event.error || "未知错误"), "err");
+          }
+          break;
+        }
+        case "message_start": {
+          // 开新消息块：思考区与正文区先行创建，保证顺序正确（无内容时隐藏）
+          turn.thinking = ""; turn.text = "";
+          turn.thinkingEl = addLine("", "thinking");
+          turn.thinkingEl.style.display = "none";
+          turn.textEl = addLine("", "text");
+          break;
+        }
+        case "message_update": {
+          // message_update 故意不带累计字段 → 客户端自己用 delta 合并
+          const e = event.assistantMessageEvent;
+          if (!e) break;
+          if (e.type === "text_delta") {
+            turn.text += e.delta;
+            turn.textEl.textContent = turn.text;
+          } else if (e.type === "thinking_delta") {
+            turn.thinking += e.delta;
+            turn.thinkingEl.style.display = "";
+            turn.thinkingEl.textContent = "（思考中）" + turn.thinking;
+          }
+          // text_start / text_end / thinking_start / thinking_end 无需处理
+          break;
+        }
+        case "message_end": {
+          // message_end.message 是权威完整对象，用它覆盖流式拼装结果
+          const text = (event.message.content || [])
+            .filter((c) => c.type === "text")
+            .map((c) => c.text)
+            .join("");
+          if (text !== turn.text) {
+            turn.text = text;
+            turn.textEl.textContent = text;
+          }
+          break;
+        }
+        case "tool_execution_start": {
+          const name = event.toolName || (event.toolCall && event.toolCall.name) || event.toolCallId || "?";
+          addLine("[工具调用] " + name, "tool");
+          break;
+        }
+        case "tool_execution_end": {
+          const name = event.toolName || (event.toolCall && event.toolCall.name) || event.toolCallId || "";
+          addLine("[工具完成] " + name, "tool");
+          break;
+        }
+        case "agent_settled":
+        case "agent_end": {
+          addLine("──── 回合结束 ────", "meta");
+          stopBtn.disabled = true;
+          break;
+        }
+        // tool_execution_update / queue_update / compaction_* 等：最小示范从略
+      }
+    }
+
+    // ---- SSE 订阅：EventSource 断线后自动重连，无需手动处理 ----
+    const es = new EventSource("/events");
+    es.onopen = () => setStatus("已连接", "ok");
+    es.onerror = () => setStatus("连接断开，自动重连中…", "err");
+    es.addEventListener("pi_event", (e) => {
+      try {
+        handle(JSON.parse(e.data));
+      } catch { /* 忽略坏帧 */ }
+    });
+    es.addEventListener("pi_stderr", (e) => {
+      try {
+        addLine("[pi stderr] " + JSON.parse(e.data).text.trim(), "err");
+      } catch { /* 忽略 */ }
+    });
+    es.addEventListener("pi_close", (e) => {
+      const d = JSON.parse(e.data);
+      addLine("[pi 进程已退出 code=" + d.code + "]", "err");
+      setStatus("Pi 进程已退出", "err");
+      stopBtn.disabled = true;
+    });
+
+    // ---- 发送 prompt / 停止 ----
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = input.value.trim();
+      if (!msg) return;
+      input.value = "";
+      addLine("[你] " + msg, "user");
+      stopBtn.disabled = false;
+      const res = await fetch("/command", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "prompt", message: msg }),
+      });
+      if (!res.ok) addLine("[发送失败] HTTP " + res.status, "err");
+    });
+
+    stopBtn.addEventListener("click", async () => {
+      // 停止 = 向 Pi 发 abort 命令（由 Pi 优雅中止当前回合，不是掐断连接）
+      await fetch("/command", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "abort" }),
+      });
+      addLine("[已发送中止请求]", "meta");
+    });
+  </script>
+</body>
+</html>

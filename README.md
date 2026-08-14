@@ -1,48 +1,77 @@
-# Pi Agent 二次开发指南（Extension-First）
+# Pi Agent 二次开发：Architecture Guardrail + Agent Skill
 
-Pi Agent（pi.dev）"小核心 + 扩展"架构下的二次开发指南：扩展（Extensions）、Agent Skills、RPC Mode、SDK 内嵌、Pi Packages 打包与官方资源索引。
+**Pi Agent（pi.dev）二次开发指南与架构约束 Skill**——帮助开发者和 Coding Agent 选择正确的扩展层，避免"在 Pi 外面重新造一个 Pi"。
 
-> 完整内容见 [SKILL.md](SKILL.md)（Agent Skills 标准格式，可直接放入 `~/.pi/agent/skills/` 或 `~/.agents/skills/` 使用）。
+## 它解决什么问题
 
-## 内容概览
+> 核心问题不是 "Pi 有哪些 API"，而是 **"一个需求应该使用 Pi 的哪一层能力实现，以及哪些东西不应该重新实现？"**
 
-| 章节 | 主题 |
-| --- | --- |
-| §1 | 官方资源（文档 / 源码 / npm 包 / 安装） |
-| §2 | 开发前检查清单（先查原生能力，再决定扩展/对接，禁止重写内核） |
-| §3 | Extensions（TypeScript）：`registerTool` / `registerCommand` / 事件订阅 |
-| §4 | Skills：Agent Skills 标准与发现路径 |
-| §5 | RPC Mode：stdin/stdout JSONL 程序化集成 |
-| §6 | SDK：Node 内嵌（`createAgentSession` / `SessionManager`） |
-| §7 | Pi Packages：打包分发扩展 + skills + prompts + themes |
-| §8 | 参考项目索引（Web UI / 原理剖析 / 技能库等） |
-| §9 | 常见坑（会话权威 / 平行状态 / RPC 流式语义等） |
+- 开发前判断能力归属（Native / Extension / Skill / RPC / SDK）
+- 避免重新实现 Pi 已经拥有的能力（会话、压缩、工具系统、模型管理…）
+- 防止产生第二套 runtime / state / session / tool system
+- 让大型 reference 按需加载
+- 验收一个 Pi 二次开发项目的架构是否正确
 
-## 蒸馏参考手册（references/）
+## 基本原则
 
-SKILL.md 是精炼骨架；以下为官方文档（pi.dev/docs）蒸馏成的详细开发手册，模型按需读取：
+```text
+Native First
+       ↓
+Extension / Skill / RPC / SDK
+       ↓
+Thin Integration
+       ↓
+Pi remains runtime authority
+```
 
-| 文件 | 内容 |
-| --- | --- |
-| `references/extensions.md` | ExtensionAPI 全量方法签名、事件生命周期与拦截能力、registerProvider、TUI 渲染器、实战坑 |
-| `references/skills.md` | Skills 完整格式、frontmatter 字段、发现优先级、模型触发流程、限制 |
-| `references/packages.md` | Pi Packages 打包/分发/作用域 + Prompt Templates 简述 |
-| `references/integration.md` | RPC 32 条命令全表、SDK 全 API、Session 文件格式、Compaction |
+## 使用方式
 
-> 蒸馏标注：⚠️ 条目为官方文档未明示、但实践中必须注意的推论。
+**作为 Skill（推荐）**：把本目录放入 `~/.pi/agent/skills/`（或项目 `.pi/skills/`，需信任项目）。模型在做 Pi 二次开发任务时会自动加载它作为架构守则。
 
-## 使用方法
+**作为文档**：`SKILL.md` 是路由器（核心规则 + 按任务路由），`references/` 是按需加载的详细知识。
 
-- **下载压缩包**：从 [Releases](https://github.com/shangdi178/pi-agent-development/releases) 下载 `pi-agent-development.zip`，解压后放入 `~/.pi/agent/skills/`（或项目 `.pi/skills/`，需先信任项目），重启 Pi 或 `/reload` 即可加载。
-- 作为技能：将本目录放入 `~/.pi/agent/skills/` 或项目 `.pi/skills/`（需信任项目），模型会在相关任务时自动加载。
-- 作为文档：直接阅读 `SKILL.md` 与 `references/` 下的蒸馏手册。
+## 仓库结构
 
-## 相关资源
+```
+pi-agent-development/
+├── SKILL.md                    # Router：核心规则 + Capability Assessment + Reference Routing
+├── references/
+│   ├── architecture.md         # 架构守则：分层模型、四条不可违反规则、责任边界
+│   ├── decision-tree.md        # 能力归属决策树 + Capability Assessment 模板
+│   ├── anti-patterns.md        # 11 个反模式（BAD / WHY / GOOD / EXCEPTION）
+│   ├── extensions.md           # Extension API 全量参考（官方文档蒸馏）
+│   ├── skills.md               # Skills 开发参考（官方文档蒸馏）
+│   ├── rpc.md                  # RPC Mode 集成参考（官方文档蒸馏）
+│   ├── sdk.md                  # SDK 内嵌参考（官方文档蒸馏）
+│   ├── sessions.md             # 会话文件格式参考（官方文档蒸馏）
+│   ├── compaction.md           # 压缩机制参考（官方文档蒸馏）
+│   ├── packages.md             # Pi Packages + Prompt Templates（官方文档蒸馏）
+│   └── acceptance.md           # 架构验收协议（PASS / WARNINGS / FAIL）
+└── examples/
+    ├── extension-minimal/      # 最小扩展示例
+    ├── rpc-node-minimal/       # 最小 RPC 客户端（零依赖）
+    ├── sdk-minimal/            # 最小 SDK 内嵌示例
+    └── web-bridge-minimal/     # Browser ↔ Adapter ↔ Pi RPC 通用技术示范
+```
 
-- Pi Agent 文档：https://pi.dev/docs/latest
-- Pi Agent 源码：https://github.com/earendil-works/pi （MIT）
-- npm 包：`@earendil-works/pi-coding-agent`
+## 事实等级
 
-## 许可
+所有 reference 标注来源（`source` / `verified_at` / `upstream_commit`），并区分：
+
+- ✅ **OFFICIAL** — Pi 官方明确说明的行为/API
+- ⚠️ **INFERENCE** — 由官方 API/源码/行为推导
+- 🧪 **PRACTICE** — 工程实践建议，不代表官方规范
+
+## 它不是什么
+
+- ❌ 不是 Pi 的 fork 或替代品
+- ❌ 不是 Agent Framework
+- ❌ 不是 Web UI / 具体应用
+- ❌ 不提供任何特定业务实现
+- ❌ 不包含任何私有项目内容
+
+本仓库只保留 **generic / reusable / open-source friendly** 的 Pi 集成知识与规范。
+
+## 许可证
 
 [MIT](LICENSE)

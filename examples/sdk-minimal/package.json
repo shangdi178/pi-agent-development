@@ -1,0 +1,14 @@
+{
+  "name": "pi-sdk-minimal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "最小 SDK 内嵌示例：Node 进程内嵌 Pi SDK 并对话",
+  "main": "index.mjs",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "^0.84.1"
+  }
+}
