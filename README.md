@@ -8,6 +8,7 @@ Pi Agent（pi.dev）"小核心 + 扩展"架构下的二次开发指南：扩展�
 
 | 章节 | 主题 |
 | --- | --- |
+| §1 | 官方资源（文档 / 源码 / npm 包 / 安装） |
 | §2 | 开发前检查清单（先查原生能力，再决定扩展/对接，禁止重写内核） |
 | §3 | Extensions（TypeScript）：`registerTool` / `registerCommand` / 事件订阅 |
 | §4 | Skills：Agent Skills 标准与发现路径 |
@@ -15,6 +16,7 @@ Pi Agent（pi.dev）"小核心 + 扩展"架构下的二次开发指南：扩展�
 | §6 | SDK：Node 内嵌（`createAgentSession` / `SessionManager`） |
 | §7 | Pi Packages：打包分发扩展 + skills + prompts + themes |
 | §8 | 参考项目索引（Web UI / 原理剖析 / 技能库等） |
+| §9 | 常见坑（会话权威 / 平行状态 / lazy 落盘等） |
 
 ## 使用方法
 
