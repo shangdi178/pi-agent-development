@@ -16,7 +16,20 @@ Pi Agent（pi.dev）"小核心 + 扩展"架构下的二次开发指南：扩展�
 | §6 | SDK：Node 内嵌（`createAgentSession` / `SessionManager`） |
 | §7 | Pi Packages：打包分发扩展 + skills + prompts + themes |
 | §8 | 参考项目索引（Web UI / 原理剖析 / 技能库等） |
-| §9 | 常见坑（会话权威 / 平行状态 / lazy 落盘等） |
+| §9 | 常见坑（会话权威 / 平行状态 / RPC 流式语义等） |
+
+## 蒸馏参考手册（references/）
+
+SKILL.md 是精炼骨架；以下为官方文档（pi.dev/docs）蒸馏成的详细开发手册，模型按需读取：
+
+| 文件 | 内容 |
+| --- | --- |
+| `references/extensions.md` | ExtensionAPI 全量方法签名、事件生命周期与拦截能力、registerProvider、TUI 渲染器、实战坑 |
+| `references/skills.md` | Skills 完整格式、frontmatter 字段、发现优先级、模型触发流程、限制 |
+| `references/packages.md` | Pi Packages 打包/分发/作用域 + Prompt Templates 简述 |
+| `references/integration.md` | RPC 32 条命令全表、SDK 全 API、Session 文件格式、Compaction |
+
+> 蒸馏标注：⚠️ 条目为官方文档未明示、但实践中必须注意的推论。
 
 ## 使用方法
 
