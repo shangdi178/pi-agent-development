@@ -42,7 +42,8 @@
   <script>
     "use strict";
     // 本页是"状态投影 + 用户交互"：所有真实状态（会话、回合、消息）都存在于 Pi，
-    // 浏览器只负责把 Pi 的事件渲染成界面。刷新页面不丢任何会话状态（会话在 pi 进程里）。
+    // 浏览器只负责把 Pi 的事件渲染成界面。刷新页面不丢会话状态（会话在 pi 进程里；
+    // 但本示范是 --no-session 纯内存，pi 进程重启后原会话即丢失）。
     const output = document.getElementById("output");
     const statusEl = document.getElementById("status");
     const input = document.getElementById("input");

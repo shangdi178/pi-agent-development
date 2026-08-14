@@ -13,7 +13,7 @@ upstream_commit: 9d2ec7f
 
 ## 1. 文件位置与命名
 
-- 路径：`~/.pi/agent/sessions/--<path>--/<timestamp>_<uuid>.jsonl`，其中 `<path>` 是工作目录、`/` 替换为 `-`。
+- 路径：`~/.pi/agent/sessions/--<path>--/<timestamp>_<uuid>.jsonl`，其中 `<path>` 是工作目录（`/`、`\` 与 `:` 替换为 `-`）、`<timestamp>` 的时间分隔符替换为 `-`；文件名中的 uuid 即会话 header 的 `id`。
 - 每行一个 JSON 对象，首行是 session header；**删除 `.jsonl` 即删除会话**（`/resume` 支持交互删除，优先用系统回收站）。
 - 会话经 `id`/`parentId` 组成树：第一个 entry 的 `parentId: null`，分支在更早的 entry 下挂新孩子，leaf 即当前位置。
 - 版本：v1 线性（旧版自动迁移）、v2 树结构、v3 将 `hookMessage` 角色改名为 `custom`；**加载时自动迁移到 v3**。
@@ -59,11 +59,15 @@ interface SessionEntryBase {
 {"type":"session_info","id":"k1l2m3n4","parentId":"j0k1l2m3","timestamp":"...","name":"Refactor auth module"}        // 显示名，/resume 选择器用它代替首条消息
 ```
 
-**CompactionEntry（`type:"compaction"`）** — 新式还带 `retainedTail`（压缩后保留的 `AgentMessage[]`，使该 entry 成为自包含检查点）：
+**CompactionEntry（`type:"compaction"`）** — 兼容两种表示，**不要假设只有一种**（详见 `compaction.md` §5）：
 
 ```json
+{"type":"compaction","id":"f6g7h8i9","parentId":"e5f6g7h8","timestamp":"...","summary":"User discussed X, Y, Z...","firstKeptEntryId":"c3d4e5f6","tokensBefore":50000}
 {"type":"compaction","id":"f6g7h8i9","parentId":"e5f6g7h8","timestamp":"...","summary":"User discussed X, Y, Z...","tokensBefore":50000,"retainedTail":[{...}]}
 ```
+
+- `firstKeptEntryId` → **旧/兼容表示**（官方源码默认生成）：压缩保留从该 entry 起的消息；
+- `retainedTail` → **新式 harness 生成的检查点表示**：压缩后保留的 `AgentMessage[]` 直接内嵌，该 entry 成为自包含检查点，重建上下文无需回走更早 entry。
 
 **BranchSummaryEntry（`type:"branch_summary"`）** — `/tree` 导航离开分支时生成：
 
@@ -95,22 +99,32 @@ TUI 可用 `pi.registerEntryRenderer(customType, renderer)` 自定义渲染。
 ```
 
 - `buildContextEntries()`：从 leaf 回走到 root，得到活动 entry 列表并应用压缩；路径上有 `CompactionEntry` 时先包含它（有 `retainedTail` 则自包含，否则从 `firstKeptEntryId` 起）；非消息 entry 保留供 TUI 渲染。
-- `buildSessionContext()`：产出 LLM 消息列表 —— `message` → 存储的 AgentMessage；`compaction` → `compactionSummary` + `retainedTail`；`branch_summary` → `branchSummary`；`custom_message` → `CustomMessage`；`custom` → **忽略**。
+- `buildSessionContext()`：产出 LLM 消息列表 —— `message` → 存储的 AgentMessage；`compaction` → `compactionSummary` +（有 `retainedTail` 则其消息，否则从 `firstKeptEntryId` 起的保留消息）；`branch_summary` → `branchSummary`；`custom_message` → `CustomMessage`；`custom` → **忽略**。
 
 ## 5. 落盘说明
 
 - 文件是**追加式 JSONL**，append 方法即时返回新 entry id；`getSessionFile()` 在内存会话下为 `undefined`，`isPersisted()` 可判别。
 - ⚠️ INFERENCE：落盘时机官方未明示（无"延迟/批量 flush"文档）——**别把"RPC 事件到达"当"文件已落盘"的信号**；需要确定性同步点时用 `compact` 响应、`export_html`、`new_session`/`switch_session` 等有确定响应的命令。
 
-## 6. 会话身份的三层权威（集成时区分）
+## 6. 会话身份术语（唯一权威定义，全文统一）
 
-⚠️ INFERENCE：会话身份有三个层级，用途不同：
+⚠️ INFERENCE：会话身份有三个层级，**术语不得混用**。本文档是 canonical 定义，其它 reference 与示例统一引用：
 
-| 层级 | 形态 | 用途 |
+| 术语 | 形态 | 定义与用途 |
 |---|---|---|
-| 会话级 | header UUID（`get_state.sessionId` / `SessionManager.getSessionId()`） | **对外暴露的权威身份**；不得自造 `project-`/`rpc-` 兜底 id |
-| entry 级 | 8 位 hex id | 树内稳定，可作 `get_entries(since=...)` 持久游标 |
-| 文件级 | `.jsonl` 路径 | `switch_session` / `open` 以路径为键 |
+| `sessionId` | header UUID（`get_state.sessionId` / `SessionManager.getSessionId()`，uuidv7） | **会话的逻辑身份**。会话 header 的 `id` 字段，同时用于会话文件命名与 `get_state.sessionId`；外部系统引用会话时的逻辑身份。**不得自造 `project-`/`rpc-` 兜底 id** |
+| `sessionFile` / `sessionPath` | `.jsonl` 文件路径（`get_state.sessionFile`） | 持久化会话 JSONL 文件的位置。**`switch_session` / `SessionManager.open` 等"打开/切换"操作的定位参数**——按路径定位，不是按 `sessionId` |
+| `entryId` | 8 位 hex id | 会话树内部 entry 身份。**`fork` / `get_entries(since=...)` / `setLabel` 等树操作使用**；entry id 稳定，可作持久游标 |
+
+对照关系速记：
+
+```text
+sessionId        = 逻辑身份（你是谁）   → get_state.sessionId / SessionManager.getSessionId()
+sessionPath      = 文件位置（在哪）     → switch_session / open / get_state.sessionFile
+entryId          = 树内节点身份（在树里） → fork / get_entries(since) / 标签
+```
+
+> 错误示例：`switch_session` 直接使用 `sessionId`（正确做法是传 `sessionPath`）；用 `entryId` 当会话身份暴露给外部系统（正确做法是 `sessionId`）。
 
 ## 7. 集成要点（坑）
 

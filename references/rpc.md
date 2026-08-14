@@ -25,7 +25,7 @@ pi --mode rpc [options]
 | `--no-session` | 禁用会话持久化（纯内存，适合一次性交互） |
 | `--session-dir <path>` | 自定义会话存储目录（默认 `~/.pi/agent/sessions`） |
 
-架构：stdin 收命令（每行一个 JSON），stdout 出响应与事件（JSON Lines）。⚠️ INFERENCE：一个 RPC 进程同时只有一个活动会话；多会话 = 多进程或运行时内 `switch_session`/`new_session` 切换。
+架构：stdin 收命令（每行一个 JSON），stdout 出响应与事件（JSON Lines）。⚠️ INFERENCE：一个 RPC 进程任一时刻只有一个**活动会话**；但多个**已保存**会话不需要多个进程——通过 `switch_session`/`new_session` 在进程内切换即可。只有需要多个会话**同时活动（并行执行）**时，才需要多个 RPC 进程。
 
 ## 2. 协议与分帧（务必遵守）
 
@@ -89,7 +89,7 @@ pi --mode rpc [options]
 
 | 事件 | 说明 |
 |---|---|
-| `agent_start` / `agent_end` / `agent_settled` | agent 级生命周期（settled = 无更多工具调用/steer） |
+| `agent_start` / `agent_end` / `agent_settled` | agent 级生命周期。`agent_end` = 底层 run 结束（但 pi 仍可能重试/压缩/续跑排队 follow-up）；`agent_settled` = **无重试、无压缩、无续跑**时触发（= idle，完整定义见 `extensions.md` §5） |
 | `turn_start` / `turn_end` | 单次助手回合 |
 | `message_start` `{message}` | 助手消息开始（`message` 为部分对象） |
 | `message_update` | 增量更新；`assistantMessageEvent` 为 delta（见下），另带 `usage` 字段 |
@@ -171,7 +171,7 @@ process.on("SIGINT", () => agent.stdin.write(JSON.stringify({ type: "abort" }) +
 2. **流式渲染必须自己拼**：`message_update` 无累计字段；以 `message_start` + deltas 拼装，`message_end.message` 为准；工具事件用 `toolCallId` 关联。
 3. **readline 坑**：Node `readline` 会误切 U+2028/U+2029，必须用自写 `\n` 分帧器（§6）。
 4. **bash 结果延迟进上下文**：bash 命令输出在下次 prompt 才作为用户消息进入 LLM 上下文；`get_messages` 里是 `bashExecution` 角色，与 `toolResult` 区分。
-5. **单进程单活动会话**：⚠️ INFERENCE——RPC 进程任一时刻只有一个活动会话；需要多会话并行 = 多进程。切换用 `switch_session`/`new_session`。
+5. **单进程单活动会话**：⚠️ INFERENCE——RPC 进程任一时刻只有一个活动会话；多个已保存会话**无需多个进程**（`switch_session`/`new_session` 切换即可）；仅当需要多个会话同时活动/并行执行时才用多进程。
 6. **`get_messages` vs `get_entries` 视角不同**：前者已应用压缩，后者是完整追加历史（含废弃分支），别混用。
 
 > 相关：会话文件格式见 `sessions.md`；压缩机制见 `compaction.md`；SDK 内嵌见 `sdk.md`。

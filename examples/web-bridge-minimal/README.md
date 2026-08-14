@@ -40,7 +40,7 @@ Browser → SSE/HTTP → Adapter Server → Pi RPC JSONL → pi --mode rpc
 | --- | --- | --- |
 | **Pi（--mode rpc）** | Agent Runtime（模型调用、回合调度）；Session Authority（会话文件、分支、压缩、`get_state`/`get_messages` 权威状态）；Tool Runtime（内置工具执行）；Message Lifecycle（message/turn/agent 事件、流式 delta、abort 语义）。 | 无——一切智能与状态都在这层。 |
 | **Adapter Server** | Transport Translation（SSE ↔ JSONL、HTTP ↔ stdin）；RPC 进程管理（spawn、重启、退出广播）；Event Forwarding（Pi 事件原样转发，**不解析、不修改**）。 | 不持有会话状态、不缓存消息、不拼 LLM 上下文、不做回合状态机——否则它就成了第二个 Agent Backend。 |
-| **Browser** | State Projection（把 Pi 事件渲染成界面，`message_end` 权威覆盖流式拼装）；User Interaction（输入、发送、停止、显示连接状态）。 | 不实现任何 agent 逻辑；刷新页面不丢会话状态（会话在 pi 进程里）。 |
+| **Browser** | State Projection（把 Pi 事件渲染成界面，`message_end` 权威覆盖流式拼装）；User Interaction（输入、发送、停止、显示连接状态）。 | 不实现任何 agent 逻辑；刷新页面不丢会话状态（会话在 pi 进程里；**进程重启则内存会话丢失**）。 |
 
 ## 完整事件流程
 
@@ -61,7 +61,11 @@ Browser → SSE/HTTP → Adapter Server → Pi RPC JSONL → pi --mode rpc
 | **abort** | 浏览器"停止"按钮 → `POST /command {type:"abort"}` → 服务器原样写入 pi stdin。中止由 Pi 优雅执行（不是掐断连接）；回合随之以 `message_end(stopReason=aborted)` + `agent_end` 收尾。 |
 | **error** | 三类错误都可见：命令失败（`response.success:false`，浏览器显示原因）；Pi stderr（服务器转成 `pi_stderr` SSE 事件）；Pi 进程退出/无法启动（服务器转成 `pi_close` SSE 事件并广播给所有订阅者）。 |
 | **session state** | 会话权威状态在 Pi 进程内（本示范用 `--no-session` 纯内存）。浏览器与服务器都不保存状态副本；需要时浏览器可通过命令端点发 `get_state` / `get_messages` 查询，Pi 的 `response.data` 原样回流。 |
-| **reconnect** | EventSource 断线（服务器重启、网络抖动）会自动重连（服务器下发 `retry: 2000`）。浏览器 `onerror` 仅显示"重连中…"；Pi 事件流是只读广播，重连后不会漏掉 Pi 内部状态（需要的话用 `get_state` 补齐投影）。 |
+| **reconnect** | 分两种情况，语义不同：① **Browser/SSE 临时断线**（Pi 子进程仍存活，如网络抖动、页面重载）——EventSource 自动重连（服务器下发 `retry: 2000`），重连后 Pi 内部状态原样继续，需要时用 `get_state` / `get_messages` 重建 UI 投影；② **Adapter Server / Pi 进程重启**——本示范使用 `--no-session`，原内存会话随进程消失，**不能恢复**。 |
+
+> ⚠️ **本示例演示 transport reconnect，不演示跨 Pi process restart 的 session persistence。**
+> 当前实现用 `pi --mode rpc --no-session`（纯内存），服务器重启会 spawn 全新 Pi 进程，原会话不存续。
+> 若未来需要"重启后恢复会话"，应改用正常 session persistence（去掉 `--no-session`，Pi 把会话落盘到 `~/.pi/agent/sessions/`，重启后 `switch_session` 恢复），而不是在 Adapter 里自己缓存会话副本。
 | **streaming delta 合并** | `message_update` 不带累计字段，浏览器自己用 `text_delta` 拼接；`message_end.message` 是权威完整对象，两者不一致时以后者覆盖——与"成功接受 ≠ 完成"同理，界面上的"事实"永远以终态事件为准。 |
 
 ## ⚠️ 架构红线

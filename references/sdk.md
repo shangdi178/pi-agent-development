@@ -131,6 +131,6 @@ await session.prompt("What files are in the current directory?");
 2. **替换后事件订阅失效**：`switchSession`/`newSession`/`fork`/clone 之后必须重新订阅 + 重绑扩展，否则收不到事件。
 3. **`get_messages` vs `get_entries` 视角不同**（与 RPC 一致）：前者压缩后视角，后者完整追加历史。
 4. **自定义数据策略**：长期扩展状态放 `appendCustomEntry`（`custom` 条目，永存不进上下文）；需要注入 LLM 的用 `appendCustomMessageEntry`（但会被压缩折叠）。
-5. ⚠️ INFERENCE：一个进程一个活动会话——多会话并行需多进程（或运行时内切换）。
+5. ⚠️ INFERENCE：一个进程一个活动会话——多个已保存会话**无需多进程**（`AgentSessionRuntime.newSession()`/`switchSession()` 运行时内切换即可）；仅当需要多会话并行执行时才用多进程。
 
 > 相关：会话文件格式见 `sessions.md`；压缩机制见 `compaction.md`；独立进程集成见 `rpc.md`。

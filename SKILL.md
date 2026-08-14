@@ -99,7 +99,7 @@ Implementation Boundary: ...
 - 扩展：`registerTool`（typebox schema、execute、renderCall/renderResult、terminate）、`registerCommand`、`on(event)`；工厂里**不要**启动长驻资源（进程/定时器/监听），延迟到 `session_start` 或命令/工具内。
 - RPC：严格 LF 分帧（Node `readline` 不兼容）；`message_update` 是 delta 需自行拼装，以 `message_end` 为准；`prompt` 的 `success:true` 只是接受 ≠ 完成；bash 结果下次 prompt 才进上下文。
 - SDK：会话生命周期归 Pi runtime；`switchSession`/`newSession` 后事件订阅失效，须重订阅 + `bindExtensions`。
-- 会话身份：一律从 Pi 派生（`get_state.sessionId` / SessionManager），不自造 id。
+- 会话身份：一律从 Pi 派生（`get_state.sessionId` / SessionManager），不自造 id（术语定义见 `sessions.md` §6）。
 - 自定义数据：长期状态放 `custom` 条目（永存不进上下文）；注入 LLM 用 `custom_message`（会被压缩折叠）。
 
 ## 7. Acceptance（验收）

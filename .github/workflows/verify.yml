@@ -1,0 +1,29 @@
+name: verify
+
+# 最小 CI：验证仓库没有结构性 / 语法性损坏。
+# 不依赖任何 LLM API key（OpenAI / Anthropic / Google），不运行真实模型对话。
+# 任一检查失败 → workflow fail：
+#   - verify-docs: 核心文件缺失 / reference frontmatter 缺键 / 引用了不存在的 reference / 出现禁止关键词
+#   - verify-examples: npm install 失败 / 语法检查失败 / import 验证失败
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Docs consistency check
+        run: node scripts/verify-docs.mjs
+
+      - name: Examples check (install + syntax + import)
+        run: node scripts/verify-examples.mjs

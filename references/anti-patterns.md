@@ -43,7 +43,7 @@ Pi 拥有循环。需要新工具用 `registerTool`；需要干预行为用官�
 
 **GOOD**
 
-列表/切换/新建/命名全部走原生 RPC（`list_sessions` 等价物 `get_state`/`switch_session`/`new_session`/`set_session_name`）或 SDK `SessionManager`。外部只存 Pi 返回的 id/路径，不存"自己的会话状态"。
+列表/切换/新建/命名全部走原生能力：RPC 侧用 `switch_session`/`new_session`/`set_session_name`，SDK 侧用 `SessionManager`（`list`/`open`/`continueRecent`/`getSessionId`）。外部只存 Pi 返回的 id/路径，不存"自己的会话状态"。
 
 **WHEN AN EXCEPTION MAY EXIST**
 
@@ -119,7 +119,7 @@ UI 只做**状态投影**：以 Pi 快照初始化，之后持续以事件流（
 
 **WHY IT FAILS**
 
-Pi 的会话 id 是 uuidv7，是文件命名、`switch_session` 参数、`get_state.sessionId` 的唯一键。自造的 id 与 Pi 无关联，重连、切换、多端并发时无法映射；一旦 Pi 的 id 变了，你的整个记录失效。
+Pi 的会话身份（`sessionId`）是 uuidv7，写入会话 header，并用于会话文件命名与 `get_state.sessionId`；但 **`switch_session` 的定位参数是会话文件路径（`sessionPath`），不是 `sessionId`**——路径与身份是两把键，不能混用（术语见 `sessions.md` §6）。自造的 id 与 Pi 无关联，重连、切换、多端并发时无法映射；一旦 Pi 的 id 变了，你的整个记录失效。
 
 **GOOD**
 

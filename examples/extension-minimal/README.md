@@ -34,7 +34,7 @@ npm install
 pi -e ./src/index.ts
 
 # 方式二：装到 ~/.pi/agent/extensions/ 后，在任意会话里让模型调用 greet 工具
-# 重启 Pi 或 /reload 生效；验证 `pi.getTools()` 里出现 greet
+# 重启 Pi 或 /reload 生效；验证 `pi.getActiveTools()` / `pi.getAllTools()` 里出现 greet
 ```
 
 ## 责任边界
