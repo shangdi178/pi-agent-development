@@ -57,6 +57,11 @@ const BLACKLIST = ["comsol"];
 // 已拆除、禁止再被引用的 reference 路径
 const REMOVED_REFERENCES = ["references/integration.md"];
 
+// SKILL.md frontmatter 校验（Agent Skills 规范）
+const SKILL_NAME_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/; // 仅小写字母/数字/连字符，无首尾/连续连字符
+const SKILL_NAME_MAX = 64;
+const SKILL_DESC_MAX = 1024;
+
 const TEXT_EXT = new Set([".md", ".js", ".mjs", ".ts", ".json", ".html", ".txt", ".yml", ".yaml"]);
 
 const errors = [];
@@ -103,6 +108,27 @@ for (const name of REFERENCE_FILES) {
   }
 }
 
+// ---- 2b. SKILL.md 自身格式验证（它必须仍是一个合法 Skill）----
+{
+  const skillPath = join(ROOT, "SKILL.md");
+  if (existsSync(skillPath)) {
+    const fm = parseFrontmatter(read(skillPath));
+    if (!fm || Object.keys(fm).length === 0) {
+      errors.push("SKILL.md: 缺少 YAML frontmatter");
+    } else {
+      const name = String(fm.name ?? "").trim();
+      const desc = String(fm.description ?? "").trim();
+      if (!name) errors.push("SKILL.md: name 缺失或为空");
+      if (!desc) errors.push("SKILL.md: description 缺失或为空");
+      if (name.length > SKILL_NAME_MAX) errors.push(`SKILL.md: name 超过 ${SKILL_NAME_MAX} 字符（当前 ${name.length}）`);
+      if (desc.length > SKILL_DESC_MAX) errors.push(`SKILL.md: description 超过 ${SKILL_DESC_MAX} 字符（当前 ${desc.length}）`);
+      if (name && !SKILL_NAME_RE.test(name)) {
+        errors.push(`SKILL.md: name "${name}" 非法——只能是小写字母/数字/连字符，且不能以连字符开头/结尾或含连续连字符`);
+      }
+    }
+  }
+}
+
 // ---- 3 & 4. reference links（含已拆除文件检查）----
 const mdFiles = walk(ROOT).filter((f) => f.endsWith(".md"));
 const linkRe = /references\/[a-z0-9-]+\.md/g;
@@ -115,6 +141,20 @@ for (const file of mdFiles) {
       errors.push(`${rel}: 引用了已拆除的 ${link}`);
     } else if (!existsSync(join(ROOT, link))) {
       errors.push(`${rel}: 引用了不存在的 ${link}`);
+    }
+  }
+}
+
+// ---- 4b. SKILL.md Routing Integrity：Router 指向的 reference 必须真实存在 ----
+{
+  const skillPath = join(ROOT, "SKILL.md");
+  if (existsSync(skillPath)) {
+    const text = read(skillPath);
+    for (const match of text.matchAll(linkRe)) {
+      const link = match[0];
+      if (!existsSync(join(ROOT, link))) {
+        errors.push(`SKILL.md: 路由指向不存在的 ${link}`);
+      }
     }
   }
 }
@@ -141,7 +181,7 @@ if (errors.length) {
   for (const e of errors) console.error(`  - ${e}`);
   process.exit(1);
 }
-console.log("✅ verify-docs: PASS（结构 / frontmatter / 链接 / 禁止内容 全部通过）");
+console.log("✅ verify-docs: PASS（结构 / Skill 元数据 / frontmatter / 路由完整性 / 链接 / 禁止内容 全部通过）");
 
 // ---- 简单 YAML frontmatter 解析（仅顶层 key: value）----
 function parseFrontmatter(text) {

@@ -1,6 +1,6 @@
 ---
 name: pi-agent-development
-description: Architecture guardrail and development guide for building ON TOP of Pi Agent (pi.dev) without rebuilding it. Use BEFORE any Pi secondary-development task: choosing the correct layer (Native / Extension / Skill / RPC / SDK), checking whether a capability already exists natively, avoiding parallel runtime/session/state/tool systems, and accepting an integration's architecture. Trigger examples: "build a tool/extension/skill for Pi", "integrate Pi into a server/Web UI/CLI", "embed Pi in Node", "debug session switching/compaction", "is this capability already in Pi?".
+description: Architecture guardrail and development guide for building ON TOP of Pi Agent (pi.dev) without rebuilding it. Use BEFORE any Pi secondary-development task: choosing the correct layer (Native / Extension / Skill / RPC / SDK), checking whether a capability already exists natively, avoiding parallel runtime/session/state/tool systems, and accepting an integration's architecture. Trigger examples: "build a tool/extension/skill for Pi", "add a tool to Pi Agent", "build a Web UI for Pi", "integrate Pi into a server via RPC", "embed Pi in Node", "build a Pi Agent Skill", "debug session switching/compaction", "design an architecture on top of Pi", "is this capability already in Pi?".
 ---
 
 # Pi Agent 二次开发：Architecture Guardrail + Router
@@ -68,18 +68,18 @@ Implementation Boundary: ...
 
 ## 4. Reference Routing（按任务类型读取）
 
-不要默认加载整个 references/。按任务读取：
+不要默认加载整个 references/。按任务读取（所有路径均相对本 Skill 根目录）：
 
 | 任务 | 读取 |
 | --- | --- |
-| **Extension 开发** | `architecture.md` → `decision-tree.md` → `extensions.md` → `anti-patterns.md` |
-| **RPC 集成** | `architecture.md` → `decision-tree.md` → `rpc.md` → `sessions.md` → `anti-patterns.md` |
-| **SDK 集成** | `architecture.md` → `decision-tree.md` → `sdk.md` → `sessions.md` → `anti-patterns.md` |
-| **Skill 开发** | `skills.md`（+ `packages.md` 如需分发） |
-| **Session 问题** | `sessions.md` → `compaction.md` → `rpc.md` 或 `sdk.md` → `anti-patterns.md` |
-| **Web/Server 对接** | `architecture.md` → `decision-tree.md` → `rpc.md` → `sessions.md` → `anti-patterns.md` + `examples/web-bridge-minimal` |
-| **打包分发** | `packages.md` |
-| **架构验收** | `acceptance.md`（对照清单逐项） |
+| **Extension 开发** | `references/architecture.md` → `references/decision-tree.md` → `references/extensions.md` → `references/anti-patterns.md` |
+| **RPC 集成** | `references/architecture.md` → `references/decision-tree.md` → `references/rpc.md` → `references/sessions.md` → `references/anti-patterns.md` |
+| **SDK 集成** | `references/architecture.md` → `references/decision-tree.md` → `references/sdk.md` → `references/sessions.md` → `references/anti-patterns.md` |
+| **Skill 开发** | `references/skills.md`（+ `references/packages.md` 如需分发） |
+| **Session 问题** | `references/sessions.md` → `references/compaction.md` → `references/rpc.md` 或 `references/sdk.md` → `references/anti-patterns.md` |
+| **Web/Server 对接** | `references/architecture.md` → `references/decision-tree.md` → `references/rpc.md` → `references/sessions.md` → `references/anti-patterns.md` + `examples/web-bridge-minimal` |
+| **打包分发** | `references/packages.md` |
+| **架构验收** | `references/acceptance.md`（对照清单逐项） |
 
 ## 5. Anti-pattern Check（常见错误自查）
 
