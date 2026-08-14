@@ -33,8 +33,9 @@ SKILL.md 是精炼骨架；以下为官方文档（pi.dev/docs）蒸馏成的详
 
 ## 使用方法
 
+- **下载压缩包**：从 [Releases](https://github.com/shangdi178/pi-agent-development/releases) 下载 `pi-agent-development.zip`，解压后放入 `~/.pi/agent/skills/`（或项目 `.pi/skills/`，需先信任项目），重启 Pi 或 `/reload` 即可加载。
 - 作为技能：将本目录放入 `~/.pi/agent/skills/` 或项目 `.pi/skills/`（需信任项目），模型会在相关任务时自动加载。
-- 作为文档：直接阅读 `SKILL.md`。
+- 作为文档：直接阅读 `SKILL.md` 与 `references/` 下的蒸馏手册。
 
 ## 相关资源
 
