@@ -26,8 +26,13 @@ jobs:
       - name: Docs consistency check
         run: node scripts/verify-docs.mjs
 
+      # 包结构检查放在 Examples check 之前：它验证"仓库作为 Release 包"的干净状态，
+      # 而 Examples check 会临时安装 node_modules，不能污染包检查
+      - name: Package structure check (repo root as package root)
+        run: node scripts/verify-package.mjs
+
       - name: Examples check (install + syntax + import)
         run: node scripts/verify-examples.mjs
 
-      - name: Package structure check (repo root as package root)
-        run: node scripts/verify-package.mjs
+      - name: Clean example install artifacts
+        run: rm -rf examples/*/node_modules examples/*/package-lock.json
