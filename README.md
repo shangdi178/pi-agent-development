@@ -121,6 +121,15 @@ They are not required during normal Skill invocation.
 - `scripts/verify-package.mjs` — Release 包结构验证（包根含 SKILL.md、无 node_modules/.git/日志/临时文件）
 - `.github/workflows/verify.yml` — 以上三步的最小 CI，无需任何 LLM API key
 
+## 致谢与借鉴
+
+本项目在打磨过程中学习了社区同类项目的经验（仅借鉴方法，内容均经我们对照上游源码验证后重写）：
+
+- **[buchidonggua/dg-ai-notes](https://github.com/buchidonggua/dg-ai-notes)**（dg-piagent skill）
+  - 借鉴其**版本基线协议**思想——skill 事实锚定到上游版本，环境版本漂移时先核对再用。已蒸馏为本项目 Agent 可执行的「[版本基线与漂移防护](references/architecture.md)」（architecture.md §6 + SKILL.md 实现规则）。
+  - 借鉴其**高信号触发词**做法——SKILL.md description 中列出具体 API 符号，提升任务匹配命中率。
+  - 借鉴其**"静默失败型陷阱"记录方式**——SDK `session.subscribe` 收不到扩展独有事件这一坑，经我们对照锁定 upstream commit 源码验证并补全后收入 `references/sdk.md` 集成要点。
+
 ## 它不是什么
 
 - ❌ 不是 Pi 的 fork 或替代品

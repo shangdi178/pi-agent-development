@@ -99,3 +99,13 @@ Adapter/Server 只做三件事：**传输转换、RPC 进程管理、事件转�
 - 🧪 **PRACTICE**：工程实践建议，不代表 Pi 官方规范。
 
 禁止把推论、项目经验、推荐架构写成 Pi 官方事实。无法验证的 API 或行为必须明确标记不确定性。来源记录见各文件 frontmatter（`source` / `verified_at` / `upstream_commit`）。
+
+## 6. 版本基线与漂移防护
+
+本 Skill 的 API 事实验证自各 reference frontmatter 锁定的 `upstream_commit`。Pi 迭代很快，Agent 在真实项目中使用本 Skill 时遵循以下可执行步骤：
+
+1. **默认信任基线**：按本 Skill 记载的 API 写代码；**不凭记忆引入基线中不存在的 API 或参数**。
+2. **核对触发条件**（任一命中即先核对再动手）：任务涉及安装/升级 `@earendil-works/pi-coding-agent`；代码报"符号不存在/类型不匹配"；用户要求使用基线之后的新特性。
+3. **核对动作**：读本地 `node_modules/@earendil-works/pi-coding-agent/dist/**/*.d.ts` 确认符号与签名存在；必要时查包内 `CHANGELOG.md`；以实际安装版本的类型为准，并提示用户"本 Skill 基线可能滞后于该版本"。
+
+> 🧪 PRACTICE：此协议的思路借鉴自社区 skill 的版本基线管理实践（见 README 致谢），为本项目的工程纪律，非 Pi 官方规范。

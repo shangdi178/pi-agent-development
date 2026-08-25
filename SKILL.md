@@ -1,6 +1,6 @@
 ---
 name: pi-agent-development
-description: Architecture guardrail and development guide for building ON TOP of Pi Agent (pi.dev) without rebuilding it. Use BEFORE any Pi secondary-development task: choosing the correct layer (Native / Extension / Skill / RPC / SDK), checking whether a capability already exists natively, avoiding parallel runtime/session/state/tool systems, and accepting an integration's architecture. Trigger examples: "build a tool/extension/skill for Pi", "add a tool to Pi Agent", "build a Web UI for Pi", "integrate Pi into a server via RPC", "embed Pi in Node", "build a Pi Agent Skill", "debug session switching/compaction", "design an architecture on top of Pi", "is this capability already in Pi?".
+description: Architecture guardrail and development guide for building ON TOP of Pi Agent (pi.dev) without rebuilding it. Use BEFORE any Pi secondary-development task: choosing the correct layer (Native / Extension / Skill / RPC / SDK), checking whether a capability already exists natively, avoiding parallel runtime/session/state/tool systems, and accepting an integration's architecture. Trigger examples: "build a tool/extension/skill for Pi", "add a tool to Pi Agent", "build a Web UI for Pi", "integrate Pi into a server via RPC", "embed Pi in Node", "build a Pi Agent Skill", "debug session switching/compaction", "design an architecture on top of Pi", "is this capability already in Pi?". Also triggers when Pi SDK/API symbols appear in the task: createAgentSession, AgentSessionRuntime, session.subscribe, SessionManager, defineTool, pi.registerTool, pi.on, switch_session, get_state, compaction.
 ---
 
 # Pi Agent 二次开发：Architecture Guardrail + Router
@@ -100,6 +100,7 @@ Implementation Boundary: ...
 - RPC：严格 LF 分帧（Node `readline` 不兼容）；`message_update` 是 delta 需自行拼装，以 `message_end` 为准；`prompt` 的 `success:true` 只是接受 ≠ 完成；bash 结果下次 prompt 才进上下文。
 - SDK：会话生命周期归 Pi runtime；`switchSession`/`newSession` 后事件订阅失效，须重订阅 + `bindExtensions`。
 - 会话身份：一律从 Pi 派生（`get_state.sessionId` / SessionManager），不自造 id（术语定义见 `sessions.md` §6）。
+- 版本基线：本 Skill 的 API 事实验证自各 reference frontmatter 的 `upstream_commit`；环境安装的 `@earendil-works/pi-coding-agent` 与基线不符时（升级 / 符号不存在报错），先读本地包内 `dist/**/*.d.ts` 核对符号，再写代码（详见 `references/architecture.md` §6）。
 - 自定义数据：长期状态放 `custom` 条目（永存不进上下文）；注入 LLM 用 `custom_message`（会被压缩折叠）。
 
 ## 7. Acceptance（验收）
