@@ -338,6 +338,7 @@ Handler 必须返回 `{ trusted: "yes" | "no" | "undecided" }`；第一个 yes/n
 14. **TUI 专属功能要守卫**：`ctx.mode === "tui"` / `ctx.hasUI`（print/json 模式没有 UI）。
 15. **`appendEntry` 状态恢复**：reload 后需自行扫描 `getEntries()` 按 `customType` 重建。
 16. **TUI 组件**：`render(width)` 每行不得超宽；状态变化后调 `invalidate()` 并 `tui.requestRender()`；主题只能从回调参数取（勿直接 import）；overlay 关闭即 dispose，**勿复用引用**，需重新调用创建函数；CJK 输入法要求组件实现 `Focusable` 并正确传播 `focused`；可用 `visibleWidth` / `truncateToWidth` / `wrapTextWithAnsi` 处理宽度，`PI_TUI_WRITE_LOG` 抓取原始 ANSI 流调试。
+17. **工具清单类声明必须一次改全**：加 / 删工具时，所有声明点同批更新——项目扩展清单（tools / capabilities）、导出的工具名常量表、`registerTool` 注册本身，以及**断言精确工具清单的测试**。若项目 check 链不包含测试，清单漂移只会在跑该扩展测试 / CI 时暴露；此类改动后务必跑定向测试。
 
 ---
 

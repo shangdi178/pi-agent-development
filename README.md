@@ -81,7 +81,7 @@ pi-agent-development/
 | --- | --- |
 | `references/architecture.md` | 架构守则：分层模型、不可违反规则、责任边界 |
 | `references/decision-tree.md` | 能力归属决策树 + Capability Assessment 模板 |
-| `references/anti-patterns.md` | 11 个反模式（BAD / WHY / GOOD / EXCEPTION） |
+| `references/anti-patterns.md` | 12 个反模式（BAD / WHY / GOOD / EXCEPTION） |
 | `references/extensions.md` | Extension API 参考（官方文档蒸馏） |
 | `references/skills.md` | Skills 开发参考（官方文档蒸馏） |
 | `references/rpc.md` | RPC Mode 集成参考（官方文档蒸馏） |

@@ -92,6 +92,7 @@ Implementation Boundary: ...
 ❌ 前端状态作权威                ❌ RPC success 当任务完成
 ❌ Copy Pi Core 到集成项目       ❌ 为普通功能改 coding-agent core
 ❌ Adapter 逐步重造 Pi
+❌ Attach 时隐式 auto-create（复活已删资源）
 ```
 
 ## 6. Implementation Rules

@@ -236,6 +236,28 @@ Adapter 职责固定为三件：**传输转换、RPC 进程管理、事件转发
 
 ---
 
+## 12. Attach 时隐式 auto-create（静默复活已删除/不存在的资源）
+
+**BAD**
+
+Adapter/Server 收到指向"不存在的工作区 / 项目 / 会话目录"的引用时（已关闭的标签页、队列里的旧消息、持久化的 last-active id），为了让请求"看起来不失败"，顺手 `mkdir -p` 把目录建出来再继续。
+
+**WHY IT FAILS**
+
+用户刚删除的资源被静默复活，删除语义失效；真正的失败被推迟到更深调用链（进程 spawn、文件读取）才爆发，错误与根因相距很远；Adapter 也悄悄获得了资源生命周期权威——它不再只是传输 / 进程管理层，而是在创造状态。
+
+**GOOD**
+
+在边界上 **fail fast**：资源不存在就返回显式的 NOT_FOUND（带资源 id），绝不隐式创建。创建只走显式的 create 路径（用户动作 / create API），并由该路径负责目录初始化。
+
+**WHEN AN EXCEPTION MAY EXIST**
+
+首次运行 / bootstrap：此时"创建"本身就是目标——也应放在显式初始化流程里，而不是任何 attach / 读取路径的副作用。
+
+> 改动这类守卫时先审计调用方与测试：依赖旧"自动创建"宽松行为的测试应改为显式 fixture（临时根目录 / 注入根路径），而不是继续依赖副作用。
+
+---
+
 ## 对应推荐方案速查
 
 | ❌ 反模式 | ✅ 推荐方案 |
@@ -251,3 +273,4 @@ Adapter 职责固定为三件：**传输转换、RPC 进程管理、事件转发
 | Copy Core Logic | 官方 API / Thin Adapter |
 | 改 core | Extension Hook |
 | Adapter 重造 Pi | Thin Adapter / Agent Skills / Native first |
+| Attach 时隐式 auto-create | Fail-fast NOT_FOUND + 显式创建路径 |
