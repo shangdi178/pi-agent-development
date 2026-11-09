@@ -80,6 +80,7 @@ Implementation Boundary: ...
 | **Web/Server 对接** | `references/architecture.md` → `references/decision-tree.md` → `references/rpc.md` → `references/sessions.md` → `references/anti-patterns.md` + `examples/web-bridge-minimal` |
 | **打包分发** | `references/packages.md` |
 | **架构验收** | `references/acceptance.md`（对照清单逐项） |
+| **三层包选择 / 专业 Agent / 多 Bot** | `references/package-layers.md` → `references/decision-tree.md`（按需再读 architecture） |
 
 ## 5. Anti-pattern Check（常见错误自查）
 
@@ -114,3 +115,16 @@ Implementation Boundary: ...
 - 安装：`npm install -g --ignore-scripts @earendil-works/pi-coding-agent`
 - 参考项目：`agegr/pi-web`、`cellinlab/how-pi-agent-works`、`disler/pi-vs-claude-code`、`K-Dense-AI/scientific-agent-skills`、`spences10/pirecall`、`SaladDay/pi-from-scratch`
 - 最小示例：`examples/`（extension-minimal / rpc-node-minimal / sdk-minimal / web-bridge-minimal）
+
+## 9. Package-layer routing（pi-ai / pi-agent / pi-coding-agent）
+
+在选择 Native / Extension / Skill / RPC / SDK **之前**，先判断所需的最低能力层。参见 `references/package-layers.md`。
+
+- **pi-ai**：只需要模型调用、Provider 适配、流式消息时使用；不为纯推理任务启动 Agent loop。
+- **pi-agent**：需要 Agent loop、工具调用与执行状态时使用；不因使用 Agent 就自动引入 coding 工作区。
+- **pi-coding-agent**：确实需要 Pi 编程工作区、文件/终端工具、会话与扩展生态时才接入。
+- **专业能力**：仿真、科研、检索等应优先以独立工具/服务或 Extension/Skill 接入所选层；不默认通过 Shell，也不默认需要 coding-agent。
+- **重要边界**：包的依赖层级 ≠ 产品运行时所有权。仅使用 pi-ai 或 pi-agent 的自建应用可以有自己的状态管理；使用 pi-coding-agent 的 Pi 集成则继续遵守本 Skill 的 Pi-owned session/runtime 规则。不同独立 Agent 实例可通过外部编排协作，但不要在单个 Pi 会话内复制第二套权威状态。
+- **版本核对**：包名、导出符号和版本须以目标环境实际安装包及对应上游文档为准；本节是架构建议（🧪 PRACTICE），不是新增 API 保证。
+
+Capability Assessment 额外写明：`Minimum Package Layer`、`Why Not Lower`、`Runtime Authority`、`Specialized Capability Boundary`。
