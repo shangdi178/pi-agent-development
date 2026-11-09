@@ -67,7 +67,7 @@ Pi remains runtime authority
 ```
 pi-agent-development/
 ├── SKILL.md                    # Skill Router：核心规则 + Capability Assessment + Reference Routing
-├── references/                 # 按需加载的详细知识（11 份，见下）
+├── references/                 # 按需加载的详细知识（12 份，见下）
 ├── examples/                   # 可选学习/参考材料（见 §7，Skill 加载不依赖它们）
 ├── scripts/                    # 仓库维护工具（见 §8，正常使用 Skill 时不需要执行）
 └── .github/workflows/verify.yml# 仓库 CI（见 §8）
@@ -79,6 +79,7 @@ pi-agent-development/
 
 | Reference | 内容 |
 | --- | --- |
+| `references/package-layers.md` | pi-ai / pi-agent / pi-coding-agent 最低充分层选择、专业 Agent 与多 Bot 边界 |
 | `references/architecture.md` | 架构守则：分层模型、不可违反规则、责任边界 |
 | `references/decision-tree.md` | 能力归属决策树 + Capability Assessment 模板 |
 | `references/anti-patterns.md` | 12 个反模式（BAD / WHY / GOOD / EXCEPTION） |
