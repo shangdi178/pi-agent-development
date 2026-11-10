@@ -43,7 +43,7 @@ Native / Extension / Skill / RPC / SDK 主要描述对 **Pi coding-agent 产品�
 
 ## 4. 专业 Agent 与多 Bot
 
-- **科研/仿真 Agent**：可使用 pi-agent + 专业工具协议/服务；COMSOL 或其他求解器由专门适配器管理，不要求 coding-agent，也不默认经 Shell。
+- **科研/仿真 Agent**：可使用 pi-agent + 专业工具协议/服务；专业求解器由专门适配器管理，不要求 coding-agent，也不默认经 Shell。
 - **秘书/协调 Agent**：如需要多步调用检索、记忆、协调工具，可选 pi-agent；若只是模型路由或单次分类，可选 pi-ai。
 - **开发 Agent**：只有需要真实 coding workspace、文件操作、终端、Pi 扩展生态时选择 pi-coding-agent。
 - **多 Bot 平台**：共享协议、模型网关和基础库；各 Bot 的执行实例、权限、会话和资源边界明确隔离。外部协调器可以管理任务分派，但不应冒充某个 Pi session 的内部状态权威。
